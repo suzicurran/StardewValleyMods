@@ -38,7 +38,7 @@ namespace BetterTrainLoot.GamePatch
 
                     if (reward.ParentSheetIndex != -1)
                     {
-                        Game1.createObjectDebris(reward.ParentSheetIndex, (int)globalPosition.X / 64, (int)globalPosition.Y / 64, (int)((double)globalPosition.Y + 320.0), 0, 1f, (GameLocation)null);
+                        Game1.createObjectDebris(reward.ParentSheetIndex.ToString(), (int)globalPosition.X / 64, (int)globalPosition.Y / 64, (int)((double)globalPosition.Y + 320.0), 0, 1f, (GameLocation)null);
                         BetterTrainLootMod.numberOfRewardsPerTrain++;
                     }
                 }
@@ -62,34 +62,20 @@ namespace BetterTrainLoot.GamePatch
             }
 
             TrainTreasure treasure = possibleLoot.ChooseItem(Game1.random);
-            int id = treasure.Id;
+            string id = treasure.Id;
 
             // Lost books have custom handling  -- No default lost books... but someone might configure them
-            if (id == 102) // LostBook Item ID
+            if (id == "(O)102" || id == "102") // LostBook Item ID
             {
-                if (Game1.player.archaeologyFound == null || !Game1.player.archaeologyFound.ContainsKey(102) || Game1.player.archaeologyFound[102][0] >= 21)
-                {
+                if (Game1.player.archaeologyFound == null || !Game1.player.archaeologyFound.ContainsKey("(O)102") || Game1.player.archaeologyFound["(O)102"][0] >= 21)
                     possibleLoot.Remove(treasure);
-                }
+
                 Game1.showGlobalMessage("You found a lost book. The library has been expanded.");
             }
 
-            Item reward;
-            // Create reward item
-            if ((id >= 516 && id <= 534) || id == 810 || id == 811 || id == 839 || (id >= 859 && id <= 863) || id == 887 || id == 888)
-            {
-                reward = new Ring(id);                
-            }
-            else if ((id >= 504 && id <= 515) || id == 804 || id == 806 || id == 853|| id == 854|| id ==855|| id == 878)
-            {
-                reward = new Boots(id);                
-            }
-            //reward = new Clothing(id);
-            //reward = new Hat(id);
-            else
-            {
-                reward = (Item)new StardewValley.Object(id, 1); // Note: if any boots or rings are in the treasure list, they will not be equipable
-            }
+            Item reward = ItemRegistry.Create(id);
+
+            // Create reward itemble
             return reward;
         }             
     }

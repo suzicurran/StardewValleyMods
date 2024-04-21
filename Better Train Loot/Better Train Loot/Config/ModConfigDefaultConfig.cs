@@ -8,7 +8,7 @@
             ModConfig config = new ModConfig()
             {
                 enableMod = true,
-                baseChancePercent = 0.20, // Base chance of getting an item   
+                baseChancePercent = 0.20f, // Base chance of getting an item   
                 useCustomTrainTreasure = true,
                 enableNoLimitTreasurePerTrain = false,
                 showTrainIsComingMessage = true,
@@ -17,7 +17,7 @@
                 enableTrainWhistle = true,
                 enableDesertTrainWhistle = true,
                 enableIslandTrainWhistle = false,
-                basePctChanceOfTrain = 0.15,
+                basePctChanceOfTrain = 0.15f,
                 maxNumberOfItemsPerTrain = 5,
                 trainCreateDelay = 10000,  //Base Game Setting
                 enableForceCreateTrain = false,

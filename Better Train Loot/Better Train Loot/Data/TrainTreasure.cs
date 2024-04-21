@@ -14,7 +14,7 @@ namespace BetterTrainLoot.Data
 
     public class TrainTreasure : IWeighted
     {
-        public int Id { get; set; }
+        public string Id { get; set; }
 
         public string Name { get; set; }
 
@@ -24,7 +24,7 @@ namespace BetterTrainLoot.Data
 
         public LOOT_RARITY Rarity {get; set;}
 
-        public TrainTreasure(int id, string name, double chance, LOOT_RARITY rarity, bool enabled = true)
+        public TrainTreasure(string id, string name, double chance, LOOT_RARITY rarity, bool enabled = true)
         {
             this.Id = id;
             this.Name = name;

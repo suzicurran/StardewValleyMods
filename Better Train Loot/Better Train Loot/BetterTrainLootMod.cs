@@ -1,9 +1,10 @@
-﻿using BetterTrainLoot.Config;
+﻿using AbilitiesExperienceBars;
+using BetterTrainLoot.Config;
 using BetterTrainLoot.Data;
 using BetterTrainLoot.GamePatch;
-using BetterTrainLoot.Interfaces;
 using HarmonyLib;
 using StardewModdingAPI;
+using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.BellsAndWhistles;
 using StardewValley.Locations;
@@ -42,12 +43,9 @@ namespace BetterTrainLoot
 
         private Railroad railroad;
 
-        private IModHelper modHelper;
-
         public override void Entry(IModHelper helper)
         {
             Instance = this;
-            modHelper = helper;
 
             config = helper.Data.ReadJsonFile<ModConfig>("config.json") ?? ModConfigDefaultConfig.CreateDefaultConfig("config.json");
             config = ModConfigDefaultConfig.UpdateConfigToLatest(config, "config.json");
@@ -58,7 +56,7 @@ namespace BetterTrainLoot
                 helper.Events.GameLoop.DayStarted += GameLoop_DayStarted;
                 helper.Events.GameLoop.TimeChanged += GameLoop_TimeChanged;
                 helper.Events.GameLoop.SaveLoaded += GameLoop_SaveLoaded;
-                //helper.Events.GameLoop.GameLaunched += GameLoop_GameLaunched;
+                helper.Events.GameLoop.GameLaunched += OnGameLaunched;
 
                 harmony = new Harmony("com.aairthegreat.mod.trainloot");
                 harmony.Patch(typeof(TrainCar).GetMethod("draw"), null, new HarmonyMethod(typeof(TrainCarOverrider).GetMethod("postfix_getTrainTreasure")));
@@ -67,22 +65,165 @@ namespace BetterTrainLoot
                 trainCars = helper.Data.ReadJsonFile<Dictionary<TRAINS, TrainData>>(trainCarFile) ?? TrainDefaultConfig.CreateTrainCarData(trainCarFile);
 
                 bool updateLoot = false;
-                foreach(var train in  trainCars.Values)
-                {
-                    //updated list to include new base game treasure
-                    if (!train.HasItem(806))
+
+                //updated list to include new base game treasure
+                foreach (var train in  trainCars.Values)
+                    if (!train.HasItem("(B)806"))
                     {
-                        train.treasureList.Add(new TrainTreasure(806, "Leprechaun Shoes", 0.01, LOOT_RARITY.RARE, true));
+                        train.treasureList.Add(new TrainTreasure("(B)806", "Leprechaun Shoes", 0.01, LOOT_RARITY.RARE, true));
                         updateLoot = true;
                     }
-                }
 
                 if (updateLoot)
-                {
                     helper.Data.WriteJsonFile(trainCarFile, trainCars);
-                }
 
                 SetupMultiplayerObject();
+            }
+        }
+
+        private void OnGameLaunched(object sender, GameLaunchedEventArgs e)
+        {
+            // Config Menu
+            var configMenu = Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
+            if (configMenu != null)
+            {
+                configMenu.Register(
+                    mod: ModManifest,
+                    reset: () => config = new ModConfig(),
+                    save: () => Helper.WriteConfig(config)
+                );
+
+                configMenu.AddBoolOption(
+                    mod: ModManifest,
+                    name: () => "Enable",
+                    tooltip: () => "Sets the mod as enabled or disabled. Normally should be set to true unless you are having issues and want to test something without removing the mod.",
+                    getValue: () => config.enableMod,
+                    setValue: value => config.enableMod = value
+                );
+
+                configMenu.AddSectionTitle(
+                    mod: ModManifest,
+                    text: () => "Train Treasure"
+                );
+                configMenu.AddBoolOption(
+                    mod: ModManifest,
+                    name: () => "Custom Treasure List",
+                    tooltip: () => "Uses the custom treasure list. If set to false, then the base game item list is used.",
+                    getValue: () => config.useCustomTrainTreasure,
+                    setValue: value => config.useCustomTrainTreasure = value
+                );
+                configMenu.AddBoolOption(
+                    mod: ModManifest,
+                    name: () => "Treasure Limite Per Train",
+                    tooltip: () => "Maximum treasure from each train. The amount is still random but there is not limit on the amount.",
+                    getValue: () => config.enableNoLimitTreasurePerTrain,
+                    setValue: value => config.enableNoLimitTreasurePerTrain = value
+                );
+
+                configMenu.AddSectionTitle(
+                    mod: ModManifest,
+                    text: () => "Train Messages"
+                );
+                configMenu.AddBoolOption(
+                    mod: ModManifest,
+                    name: () => "Train Message",
+                    tooltip: () => "Shows/hides the message when a train is passing thru the valley and you are not in the desert.",
+                    getValue: () => config.showTrainIsComingMessage,
+                    setValue: value => config.showTrainIsComingMessage = value
+                );
+                configMenu.AddBoolOption(
+                    mod: ModManifest,
+                    name: () => "Desert Train Message",
+                    tooltip: () => "Shows/hides the message when a train is passing thru the valley while you are in the desert.",
+                    getValue: () => config.showDesertTrainIsComingMessage,
+                    setValue: value => config.showDesertTrainIsComingMessage = value
+                );
+                configMenu.AddBoolOption(
+                    mod: ModManifest,
+                    name: () => "Island Train Message",
+                    tooltip: () => "Shows/hides the message when a train is passing thru the valley while you are on the island.",
+                    getValue: () => config.showIslandTrainIsComingMessage,
+                    setValue: value => config.showIslandTrainIsComingMessage = value
+                );
+
+                configMenu.AddSectionTitle(
+                    mod: ModManifest,
+                    text: () => "Train Whistles"
+                );
+
+                configMenu.AddBoolOption(
+                    mod: ModManifest,
+                    name: () => "Train Whistle",
+                    tooltip: () => "When the train comes thru the valley and you are not in the desert, does it make a sound?",
+                    getValue: () => config.enableTrainWhistle,
+                    setValue: value => config.enableTrainWhistle = value
+                );
+                configMenu.AddBoolOption(
+                    mod: ModManifest,
+                    name: () => "Desert Train Whistle",
+                    tooltip: () => "When the train comes thru the valley and you are in the desert, does it make a sound?",
+                    getValue: () => config.enableDesertTrainWhistle,
+                    setValue: value => config.enableDesertTrainWhistle = value
+                );
+                configMenu.AddBoolOption(
+                    mod: ModManifest,
+                    name: () => "Island Train Whistle",
+                    tooltip: () => "When the train comes thru the valley and you are on the island, does it make a sound?",
+                    getValue: () => config.enableIslandTrainWhistle,
+                    setValue: value => config.enableIslandTrainWhistle = value
+                );
+
+                configMenu.AddSectionTitle(
+                    mod: ModManifest,
+                    text: () => "Train Creation"
+                );
+                configMenu.AddNumberOption(
+                    mod: ModManifest,
+                    name: () => "Base Item Chance",
+                    tooltip: () => "What is the chance to get something from a train. The player's daily luck does factor into this.",
+                    getValue: () => config.baseChancePercent,
+                    setValue: value => config.baseChancePercent = value
+                );
+                configMenu.AddNumberOption(
+                    mod: ModManifest,
+                    name: () => "Chance of Train",
+                    tooltip: () => "Every time the game time changes, this the percent chance of a new train, assuming the daily maximum has not been met.",
+                    getValue: () => config.basePctChanceOfTrain,
+                    setValue: value => config.basePctChanceOfTrain = value
+                );
+                configMenu.AddNumberOption(
+                    mod: ModManifest,
+                    name: () => "Creation Delay",
+                    tooltip: () => "How many milliseconds from when the message about a train is going thru Stardew Valley and when the train shows up.",
+                    getValue: () => config.trainCreateDelay,
+                    setValue: value => config.trainCreateDelay = value
+                );
+                configMenu.AddNumberOption(
+                    mod: ModManifest,
+                    name: () => "Max Trains",
+                    tooltip: () => "Sets the maximum possible number of trains.",
+                    getValue: () => config.maxTrainsPerDay,
+                    setValue: value => config.maxTrainsPerDay = value
+                );
+                configMenu.AddNumberOption(
+                    mod: ModManifest,
+                    name: () => "Max Items per Train",
+                    tooltip: () => "Limits the amount of items per train that the mod will create.",
+                    getValue: () => config.maxNumberOfItemsPerTrain,
+                    setValue: value => config.maxNumberOfItemsPerTrain = value
+                );
+
+                configMenu.AddSectionTitle(
+                    mod: ModManifest,
+                    text: () => "Other Options"
+                );
+                configMenu.AddBoolOption(
+                    mod: ModManifest,
+                    name: () => "Force Train Creation",
+                    tooltip: () => "If value is true, allows the user to force a train to be created by pressing the button O.",
+                    getValue: () => config.enableForceCreateTrain,
+                    setValue: value => config.enableForceCreateTrain = value
+                );
             }
         }
 
@@ -96,36 +237,13 @@ namespace BetterTrainLoot
                 enableCreatedTrain = true;
             }
             else if (e.Button == SButton.O && railroadMapBlocked)
-            {
                 this.Monitor.Log("Player press O, but the railraod map is not available... No choo choo for you.");
-            }
         }
 
         private void GameLoop_SaveLoaded(object sender, StardewModdingAPI.Events.SaveLoadedEventArgs e)
         {
             railroad = (Game1.getLocationFromName("Railroad") as Railroad);
             startupMessage = true;
-
-            //Check for JSON Assests
-            //if (this.Helper.ModRegistry.IsLoaded("spacechase0.JsonAssets"))
-            //{
-            //    var api = modHelper.ModRegistry.GetApi<IJsonAssetsAPI>("spacechase0.JsonAssets");
-
-            //    var trees = api?.GetAllFruitTreeIds();
-            //    var crops = api?.GetAllCropIds();
-            //    //Game1.Get
-            //}
-
-
-            var fish = Game1.content.Load<Dictionary<int, string>>("Data\\Fish");
-            var fruitTrees = Game1.content.Load<Dictionary<int, string>>("Data\\fruitTrees");
-
-            var crops = Game1.content.Load<Dictionary<int, string>>("Data\\Crops");
-            ////Content Packs
-            //foreach (IContentPack contentPack in this.Helper.ContentPacks.GetOwned())
-            //{
-            //    this.Monitor.Log($"Reading content pack: {contentPack.Manifest.Name} {contentPack.Manifest.Version} from {contentPack.DirectoryPath}");
-            //}
         }
 
         private void GameLoop_TimeChanged(object sender, StardewModdingAPI.Events.TimeChangedEventArgs e)
@@ -136,13 +254,8 @@ namespace BetterTrainLoot
                 {
                     var ranValue = Game1.random.NextDouble();
                     if (forceNewTrain)
-                    {
                         CreateNewTrain();
-                    }
-                    else if (enableCreatedTrain
-                        && numberOfTrains < maxNumberOfTrains
-                        && e.NewTime >= startTimeOfFirstTrain
-                        && ranValue <= pctChanceOfNewTrain)
+                    else if (enableCreatedTrain && numberOfTrains < maxNumberOfTrains && e.NewTime >= startTimeOfFirstTrain && ranValue <= pctChanceOfNewTrain)
                     {
                         this.Monitor.Log($"Creating Train: {ranValue} <= {pctChanceOfNewTrain} from {e.NewTime} >= {startTimeOfFirstTrain}");
                         CreateNewTrain();
@@ -181,9 +294,7 @@ namespace BetterTrainLoot
                 }
             }
             else
-            {
                 isMainPlayer = false;
-            }
 
             SetStartupMessage();
 
@@ -193,13 +304,10 @@ namespace BetterTrainLoot
         private void SetStartupMessage()
         {
             if (startupMessage && isMainPlayer)
-            {
                 this.Monitor.Log("Single player or Host:  Mod Enabled.");
-            }
             else if (startupMessage && !isMainPlayer)
-            {
                 this.Monitor.Log("Farmhand player: (Mostly) Mod Disabled.");
-            }
+
             startupMessage = false;
         }
 
@@ -207,9 +315,7 @@ namespace BetterTrainLoot
         {
             railroadMapBlocked = (Game1.stats.DaysPlayed < 31U);
             if (railroadMapBlocked)
-            {
                 Monitor.Log("Railroad map blocked.  No trains can be created, yet.");
-            }
 
             return !railroadMapBlocked;
         }
@@ -221,6 +327,7 @@ namespace BetterTrainLoot
             numberOfTrains++;
             forceNewTrain = false;
             trainType = TRAINS.UNKNOWN;
+
             //this.Monitor.Log($"Setting train... Choo choo... {Game1.timeOfDay}");
             enableCreatedTrain = false;            
         }
@@ -249,9 +356,7 @@ namespace BetterTrainLoot
         {
             //Update the treasure chances for today
             foreach (TrainData train in trainCars.Values)
-            {
                 train.UpdateTrainLootChances(Game1.player.DailyLuck);                                                                                                     
-            }
         }
 
         private void SetupMultiplayerObject()

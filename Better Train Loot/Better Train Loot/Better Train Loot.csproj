@@ -1,17 +1,18 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-   <PropertyGroup>
+  <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>net5.0</TargetFramework>
-	<EnableHarmony>true</EnableHarmony>
-	<StartupObject></StartupObject>
-	<ApplicationIcon />
-	<Version>1.0.8</Version>
-	<Authors>AairTheGreat</Authors>
-	<Company />
-	<Product />
-	<Copyright>2021</Copyright>
-  </PropertyGroup>     
+    <TargetFramework>net6.0</TargetFramework>
+    <EnableHarmony>true</EnableHarmony>
+    <StartupObject>
+    </StartupObject>
+    <ApplicationIcon />
+    <Version>1.0.8</Version>
+    <Authors>AairTheGreat</Authors>
+    <Company />
+    <Product />
+    <Copyright>2021</Copyright>
+  </PropertyGroup>
   <ItemGroup>
     <None Include="manifest.json" />
   </ItemGroup>
@@ -24,6 +25,6 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.0.0" />
+    <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.1.1" />
   </ItemGroup>
 </Project>

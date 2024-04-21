@@ -11,8 +11,8 @@
         public bool enableTrainWhistle { get; set; }
         public bool enableDesertTrainWhistle { get; set; }
         public bool enableIslandTrainWhistle { get; set; }
-        public double baseChancePercent { get; set; }
-        public double basePctChanceOfTrain { get; set; }
+        public float baseChancePercent { get; set; }
+        public float basePctChanceOfTrain { get; set; }
         public int trainCreateDelay { get; set; }
         public int maxTrainsPerDay { get; set; }
         public int maxNumberOfItemsPerTrain { get; set; }

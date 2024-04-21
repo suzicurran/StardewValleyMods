@@ -1,5 +1,6 @@
 ﻿using StardewValley;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BetterTrainLoot.Data
 {
@@ -30,7 +31,7 @@ namespace BetterTrainLoot.Data
             double itemBaseChance = 0.0;
             foreach (TrainTreasure item in this.treasureList)
             {
-                if (item.Id != 434) // If not a Stardrop
+                if (item.Id != "(O)434") // If not a Stardrop
                 {
                     itemBaseChance = Game1.random.NextDouble() / 10.0;  // The bestcase is 10% (0.1)
                     itemBaseChance = itemBaseChance + (itemBaseChance * todayLuck);
@@ -47,15 +48,12 @@ namespace BetterTrainLoot.Data
             }           
         }
 
-        internal bool HasItem(int id)
+        internal bool HasItem(string id)
         {
-            for (var i = 0; i<treasureList.Count; i++)
-            {
-                if (treasureList[i].Id == id)
-                    return true;
-            }
-
-            return false;
+            if (treasureList.Any(x => x.Id == id))
+                return true;
+            else
+                return false;
         }
     }
 }
